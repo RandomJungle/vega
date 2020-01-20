@@ -1,36 +1,40 @@
 # coding: utf8
 
-import logging
-
+from spacy.language import Language
 from spacy.matcher.matcher import Matcher
 from spacy.tokens import Doc, Span, Token
 
 
 class MatcherComponent(object):
-    """Matcher-based pipeline component
+    """
+    Matcher-based pipeline component
 
     Note:
         optional merging of matched spans, provided in utils class
         are function that allow to control match type (all, overlapping, etc.)
     """
 
-    def __init__(self, nlp: Doc, component_name: str, is_attribute: str, has_attribute: str,
-                 matcher, merge_on_match: bool = True):
-        """Constructor of MatcherComponent object
+    def __init__(self,
+                 nlp: Language,
+                 matcher: Matcher,
+                 component_name: str,
+                 attribute_name: str,
+                 merge_on_match: bool = True):
+        """
+        Constructor of MatcherComponent object
 
         Args:
             nlp (Doc): Spacy Doc object
             component_name (str): Unique name of this component
-            is_attribute (str): label to add for custom attribute at Token level
-            has_attribute (str): label to add for custom attribute at Doc / Span level
-            matcher (Matcher): matcher object to call, can be a PhraseMatcher or a Matcher
-            merge_on_match (Bool): optional merging on match option, default to True
+            attribute_name (str): label to add for custom attribute
+            merge_on_match (bool): optional merging on match option, default to True
+            validate (bool): optional pattern validation, default to False
         """
         self.nlp = nlp
-        self.name = component_name
         self.matcher = matcher
-        self.is_attribute = is_attribute
-        self.has_attribute = has_attribute
+        self.name = component_name
+        self.is_attribute = f"is_{attribute_name}"
+        self.has_attribute = f"has_{attribute_name}"
         self.merge_on_match = merge_on_match
 
         # Register attribute on the Token
@@ -44,8 +48,12 @@ class MatcherComponent(object):
         Apply the pipeline component on a Doc object and modify it if matches
         are found. Return the Doc, so it can be processed by the next component
         in the pipeline, if available.
-        :param doc: the doc object
-        :return: doc: the doc object modified
+
+        Args:
+            doc: document object
+
+        Returns:
+            doc object modified
         """
         matches = self.matcher(doc)
         if matches:
